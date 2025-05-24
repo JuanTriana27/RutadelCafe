@@ -1,0 +1,29 @@
+/* ScrollTestSection.module.css */
+.section {
+    min-height: 150vh;
+    padding: 4rem 2rem;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content {
+    max-width: 1200px;
+    text-align: center;
+}
+
+.imageContainer {
+    margin: 2rem auto;
+    width: 80%;
+    max-width: 800px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
