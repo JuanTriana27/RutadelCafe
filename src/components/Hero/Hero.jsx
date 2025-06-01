@@ -144,7 +144,6 @@ const HeroSection = () => {
 
       // Calcular velocidad de desplazamiento
       const now = Date.now();
-      const timeDiff = now - touchStartTime.current;
       touchStartTime.current = now;
 
       // Factor de sensibilidad para móvil (puede ajustarse)
