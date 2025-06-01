@@ -1,12 +1,9 @@
-/* src/components/HeroSection.module.css */
-
 /* 1) Wrapper "root" */
 .wrapperRoot {
     position: relative;
     height: calc(100vh * 2);
     overflow: hidden;
     -webkit-overflow-scrolling: touch;
-    /* Mejor scroll en iOS */
 }
 
 /* 2) Contenedor fijo */
@@ -25,7 +22,6 @@
     transform: translateZ(0);
     transition: background-image 0.4s ease;
     touch-action: none;
-    /* Importante para control táctil */
 }
 
 /* 3) VIDEO */
@@ -69,7 +65,6 @@
     max-width: 90%;
     will-change: opacity;
     pointer-events: none;
-    /* Permitir eventos táctiles en el contenedor */
 }
 
 .hidden {
@@ -112,9 +107,10 @@
     transition: transform 0.4s ease;
 }
 
-/* 8) Ocultar header */
+/* 8) Ocultar header con fade en lugar de display:none */
 .hideHeader {
-    display: none !important;
+    opacity: 0;
+    pointer-events: none;
     transition: opacity 0.4s ease;
 }
 
@@ -159,7 +155,6 @@
         font-size: 2rem;
     }
 
-    /* Texto más claro para móviles */
     .frameText {
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
     }
@@ -183,7 +178,6 @@
         padding: 0 1.5rem;
     }
 
-    /* Mejorar legibilidad en móviles pequeños */
     .stageText .stageDesc {
         font-size: 0.9rem;
         line-height: 1.6;

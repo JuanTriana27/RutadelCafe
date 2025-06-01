@@ -13,9 +13,15 @@ const HeroSection = () => {
   const touchStartY = useRef(0);
   const lastTouchY = useRef(0);
   const touchStartTime = useRef(0);
+  const hasMoved = useRef(false);
+
+  // Umbrales y factores
+  const SCROLL_THRESHOLD = 5;       // px mínimos para contar como scroll significativo
+  const SCROLL_FACTOR = 0.0005;     // factor para mapear deltaY → segundos de video
+  const MOBILE_SENSITIVITY = 1.5;   // sensibilidad touch
 
   useEffect(() => {
-    // Precargar recursos
+    // 1) Precargar y configurar imagen inicial
     const img = new Image();
     img.src = "/images/rutadelcafe.jpg";
     img.onload = () => {
@@ -23,8 +29,6 @@ const HeroSection = () => {
         heroContainerRef.current.style.backgroundImage = `url(${img.src})`;
       }
     };
-
-    // 1) Configurar imagen inicial
     if (heroContainerRef.current) {
       heroContainerRef.current.style.backgroundImage = `url(/images/rutadelcafe.jpg)`;
       heroContainerRef.current.style.backgroundSize = "cover";
@@ -38,7 +42,6 @@ const HeroSection = () => {
       videoEl.currentTime = 0;
       videoEl.pause();
     };
-
     if (videoEl) {
       if (videoEl.readyState >= 1) {
         handleLoadedData();
@@ -47,20 +50,18 @@ const HeroSection = () => {
       }
     }
 
-    // 3) Handler de scroll proporcional
+    // 3) Handler de scroll proporcional + threshold + fade
     const handleScroll = (deltaY) => {
       if (!metadataLoaded || isTransitioning.current) return;
+      if (Math.abs(deltaY) < SCROLL_THRESHOLD) return;
 
       const now = Date.now();
       const timeDiff = now - lastScrollTime.current;
       lastScrollTime.current = now;
 
-      // Limpiar timeout de pausa anterior
       if (scrollTimeout.current) {
         clearTimeout(scrollTimeout.current);
       }
-
-      // Configurar timeout para pausa automática
       scrollTimeout.current = setTimeout(() => {
         if (videoRef.current && showSiembra) {
           videoRef.current.pause();
@@ -70,89 +71,87 @@ const HeroSection = () => {
       const video = videoRef.current;
       if (!video) return;
 
-      // Activación inicial con scroll hacia abajo
+      // Activación inicial: scroll hacia abajo
       if (!showSiembra && deltaY > 0) {
         setShowSiembra(true);
         document.querySelector('header')?.classList.add(styles.hideHeader);
         heroContainerRef.current.style.backgroundImage = 'none';
         video.currentTime = 0;
-        video.play().catch(err => console.log("Play error:", err));
+        video.classList.add(styles.showVideo);
+        video.play().catch(() => {});
         return;
       }
 
       if (showSiembra) {
-        // Calcular velocidad basada en tiempo entre eventos
+        // velocidad relativa
         const speedFactor = timeDiff > 0 ? Math.min(2, 100 / timeDiff) : 1;
-
-        // Scroll hacia abajo (deltaY positivo) avanza el video
-        const SCROLL_FACTOR = 0.0005;
         const deltaTime = deltaY * SCROLL_FACTOR * speedFactor;
-
         let newTime = video.currentTime + deltaTime;
 
-        // Manejar límites
-        if (newTime < 0) {
-          newTime = 0;
-        }
-
-        if (newTime > video.duration) {
-          newTime = video.duration;
-        }
-
-        // Actualizar tiempo del video
+        if (newTime < 0) newTime = 0;
+        if (newTime > video.duration) newTime = video.duration;
         video.currentTime = newTime;
 
-        // Asegurar reproducción si no está reproduciendo
         if (video.paused) {
-          video.play().catch(err => console.log("Play error:", err));
+          video.play().catch(() => {});
         }
 
-        // Comprobar si debemos volver a la imagen
+        // Detectar retroceso al inicio
         if (newTime <= 0 && deltaY < 0) {
           isTransitioning.current = true;
-
-          // Esperar a que la transición de opacidad termine
+          video.currentTime = 0;
+          video.classList.remove(styles.showVideo);
           setTimeout(() => {
             setShowSiembra(false);
             document.querySelector('header')?.classList.remove(styles.hideHeader);
             heroContainerRef.current.style.backgroundImage = `url(/images/rutadelcafe.jpg)`;
             video.pause();
             isTransitioning.current = false;
-          }, 400); // Tiempo igual a la duración de la transición en CSS
+          }, 400);
+        }
+
+        // Detectar fin del video para liberar scroll
+        if (newTime >= video.duration - 0.01) {
+          window.removeEventListener('wheel', onWheel);
+          window.removeEventListener('touchmove', onTouchMove);
+          document.body.style.overflow = 'auto';
         }
       }
     };
 
-    // 4) Handler de wheel para desktop
+    // 4) onWheel (desktop)
     const onWheel = (e) => {
       e.preventDefault();
       handleScroll(e.deltaY);
     };
 
-    // 5) Handlers para touch en móvil
+    // 5) Handlers touch (móvil)
     const onTouchStart = (e) => {
       touchStartY.current = e.touches[0].clientY;
       lastTouchY.current = e.touches[0].clientY;
       touchStartTime.current = Date.now();
+      hasMoved.current = false;
     };
 
     const onTouchMove = (e) => {
+      const currentY = e.touches[0].clientY;
+      const dyTotal = touchStartY.current - currentY;
+      
+
+      // Si no se ha movido lo suficiente, permitir scroll nativo
+      if (!hasMoved.current && Math.abs(dyTotal) < 10) {
+        return;
+      }
+      hasMoved.current = true;
       e.preventDefault();
-      const touchY = e.touches[0].clientY;
-      const deltaY = lastTouchY.current - touchY; // Diferencia desde el último movimiento
-      lastTouchY.current = touchY;
 
-      // Calcular velocidad de desplazamiento
-      const now = Date.now();
-      touchStartTime.current = now;
-
-      // Factor de sensibilidad para móvil (puede ajustarse)
-      const mobileSensitivity = 1.5;
-      handleScroll(deltaY * mobileSensitivity);
+      const deltaY = lastTouchY.current - currentY;
+      lastTouchY.current = currentY;
+      handleScroll(deltaY * MOBILE_SENSITIVITY);
     };
 
     const onTouchEnd = () => {
-      // No se necesita acción adicional
+      // nada adicional
     };
 
     // 6) Añadir listeners
@@ -168,6 +167,7 @@ const HeroSection = () => {
       window.removeEventListener('touchend', onTouchEnd);
       if (videoEl) videoEl.removeEventListener('loadeddata', handleLoadedData);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      document.body.style.overflow = ''; // restaurar overflow si fue modificado
     };
   }, [showSiembra, metadataLoaded]);
 
