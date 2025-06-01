@@ -1,201 +1,138 @@
-.container {
-    overflow-y: scroll;
-    overflow-x: hidden;
-    height: 100vh;
-    width: 100vw;
-    scroll-behavior: smooth;
-}
+/* HeroSection.module.css */
 
-.section {
-    height: 100vh;
-    width: 100vw;
+/* ------------------ */
+/* 1) Wrapper “extra-alto”: 10 × 100vh = 1000vh */
+.wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transform: translateY(0);
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform, opacity;
-    overflow: hidden;
-    /* Nuevo */
+    height: calc(100vh * 10);
+    /* 10 frames × 100vh = 1000vh */
+    background-color: black;
+    /* respaldo oscuro mientras carga la primera imagen */
 }
 
-.section::before {
-    content: '';
-    position: absolute;
+/* ------------------ */
+/* 2) Hero fijo que siempre ocupa 100vh */
+.fixedHero {
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: var(--bg-image);
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    /* respaldo si la imagen tarda en cargar */
     background-size: cover;
     background-position: center;
-    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-    z-index: -1;
-    transform: scale(1.1);
+    z-index: 10;
 }
 
-.animateIn::before {
-    transform: scale(1);
-    /* Normaliza el zoom al entrar */
-}
-
-.animateOutDown::before {
-    transform: translateY(-5%) scale(1.05);
-    /* Efecto al salir hacia abajo */
-}
-
-.animateOutUp::before {
-    transform: translateY(5%) scale(1.05);
-    /* Efecto al salir hacia arriba */
-}
-
-
-.hero {
-    z-index: 4;
-}
-
-.animateIn {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s;
-    /* Añade delay */
-}
-
-.animateIn .mainTitle {
-    transition: transform 0.8s ease 0.5s, opacity 0.8s ease 0.5s;
-}
-
-.animateIn .subtitle {
-    transition: all 0.8s ease 0.7s;
-}
-
-.animateIn .processContent {
-    transition: all 0.8s ease 0.9s;
-}
-
-.process {
-    z-index: 3;
-}
-
-.animateIn {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
-
-.animateOut {
-    opacity: 0 !important;
-    transform: translateY(-50px) !important;
-}
-
+/* ------------------ */
+/* 3) Overlay semitransparente sobre la imagen */
 .overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background-color: rgba(0, 0, 0, 0.7);
+    z-index: 15;
+    /* justo entre fixedHero(10) y frameText(20) */
 }
 
-.content {
-    position: relative;
-    z-index: 1;
-    max-width: 1200px;
-    padding: 2rem;
-    text-align: center;
+/* ------------------ */
+/* 4) Contenedor del texto (inicial / etapas / consumo) */
+.frameText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: white;
+    text-align: center;
+    z-index: 20;
+    transition: opacity 0.4s ease;
+    /* fade-in / fade-out */
 }
 
-.mainTitle {
+.hidden {
+    opacity: 0;
+}
+
+.visible {
+    opacity: 1;
+}
+
+/* ------------------ */
+/* 5) Estilos para el bloque inicial 'LA RUTA DEL CAFÉ' */
+.initialText .mainTitle {
     font-size: 4rem;
     margin-bottom: 1rem;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    transform: translateY(20px);
-    transition: transform 0.6s ease;
 }
 
-.subtitleContainer {
-    margin-bottom: 2rem;
-}
-
-.subtitle {
+.initialText .subtitle {
     font-size: 1.5rem;
     margin: 0.5rem 0;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.6s ease 0.2s;
 }
 
-.processContent {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2rem;
-    border-radius: 15px;
-    backdrop-filter: blur(5px);
-    transform: translateY(50px);
-    opacity: 0;
-    transition: all 0.8s ease;
+/* ------------------ */
+/* 6) Estilos para cada etapa 'stage' */
+.stageText .stageTitle {
+    font-size: 3rem;
+    margin-bottom: 0.8rem;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
 }
 
-.processTitle {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-}
-
-.processText {
+.stageText .stageDesc {
     font-size: 1.2rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.5;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-.processFact {
-    font-size: 1rem;
+/* ------------------ */
+/* 7) Estilos para el contenido que sigue tras el héroe */
+.process {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    color: #222;
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
+    z-index: 5;
 }
 
-/* Animaciones activas */
-.animateIn .mainTitle,
-.animateIn .subtitle,
-.animateIn .processContent {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-
-
-/* Responsividad */
+/* ------------------ */
+/* 8) Responsive: tamaños en pantallas pequeñas */
 @media (max-width: 768px) {
-    .mainTitle {
+    .initialText .mainTitle {
         font-size: 2.5rem;
     }
 
-    .subtitle {
-        font-size: 1.2rem;
-    }
-
-    .processTitle {
-        font-size: 2rem;
-    }
-
-    .processText {
+    .initialText .subtitle,
+    .stageText .stageDesc {
         font-size: 1rem;
+    }
+
+    .stageText .stageTitle {
+        font-size: 2rem;
     }
 }
 
 @media (max-width: 480px) {
-    .mainTitle {
+    .initialText .mainTitle {
         font-size: 2rem;
     }
 
-    .subtitle {
-        font-size: 1rem;
+    .initialText .subtitle {
+        font-size: 0.9rem;
     }
 
-    .processContent {
-        padding: 1rem;
+    .stageText .stageTitle {
+        font-size: 1.5rem;
+    }
+
+    .stageText .stageDesc {
+        font-size: 0.9rem;
     }
 }
