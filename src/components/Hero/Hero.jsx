@@ -10,6 +10,9 @@ const HeroSection = () => {
   const lastScrollTime = useRef(0);
   const scrollTimeout = useRef(null);
   const isTransitioning = useRef(false);
+  const touchStartY = useRef(0);
+  const lastTouchY = useRef(0);
+  const touchStartTime = useRef(0);
 
   useEffect(() => {
     // Precargar recursos
@@ -45,7 +48,7 @@ const HeroSection = () => {
     }
 
     // 3) Handler de scroll proporcional
-    const onWheel = (e) => {
+    const handleScroll = (deltaY) => {
       if (!metadataLoaded || isTransitioning.current) return;
 
       const now = Date.now();
@@ -68,8 +71,7 @@ const HeroSection = () => {
       if (!video) return;
 
       // Activación inicial con scroll hacia abajo
-      if (!showSiembra && e.deltaY > 0) {
-        e.preventDefault();
+      if (!showSiembra && deltaY > 0) {
         setShowSiembra(true);
         document.querySelector('header')?.classList.add(styles.hideHeader);
         heroContainerRef.current.style.backgroundImage = 'none';
@@ -79,14 +81,12 @@ const HeroSection = () => {
       }
 
       if (showSiembra) {
-        e.preventDefault();
-
         // Calcular velocidad basada en tiempo entre eventos
         const speedFactor = timeDiff > 0 ? Math.min(2, 100 / timeDiff) : 1;
 
         // Scroll hacia abajo (deltaY positivo) avanza el video
         const SCROLL_FACTOR = 0.0005;
-        const deltaTime = e.deltaY * SCROLL_FACTOR * speedFactor;
+        const deltaTime = deltaY * SCROLL_FACTOR * speedFactor;
 
         let newTime = video.currentTime + deltaTime;
 
@@ -108,7 +108,7 @@ const HeroSection = () => {
         }
 
         // Comprobar si debemos volver a la imagen
-        if (newTime <= 0 && e.deltaY < 0) {
+        if (newTime <= 0 && deltaY < 0) {
           isTransitioning.current = true;
 
           // Esperar a que la transición de opacidad termine
@@ -123,10 +123,50 @@ const HeroSection = () => {
       }
     };
 
+    // 4) Handler de wheel para desktop
+    const onWheel = (e) => {
+      e.preventDefault();
+      handleScroll(e.deltaY);
+    };
+
+    // 5) Handlers para touch en móvil
+    const onTouchStart = (e) => {
+      touchStartY.current = e.touches[0].clientY;
+      lastTouchY.current = e.touches[0].clientY;
+      touchStartTime.current = Date.now();
+    };
+
+    const onTouchMove = (e) => {
+      e.preventDefault();
+      const touchY = e.touches[0].clientY;
+      const deltaY = lastTouchY.current - touchY; // Diferencia desde el último movimiento
+      lastTouchY.current = touchY;
+
+      // Calcular velocidad de desplazamiento
+      const now = Date.now();
+      const timeDiff = now - touchStartTime.current;
+      touchStartTime.current = now;
+
+      // Factor de sensibilidad para móvil (puede ajustarse)
+      const mobileSensitivity = 1.5;
+      handleScroll(deltaY * mobileSensitivity);
+    };
+
+    const onTouchEnd = () => {
+      // No se necesita acción adicional
+    };
+
+    // 6) Añadir listeners
     window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd, { passive: false });
 
     return () => {
       window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
       if (videoEl) videoEl.removeEventListener('loadeddata', handleLoadedData);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
@@ -150,8 +190,8 @@ const HeroSection = () => {
         <div className={`${styles.frameText} ${!showSiembra ? styles.visible : styles.hidden}`}>
           <div className={styles.initialText}>
             <h1 className={styles.mainTitle}>LA RUTA DEL CAFÉ</h1>
-            <p className={styles.subtitle}>AVANZA CON EL SCROLL Y</p>
-            <p className={styles.subtitle}>EXPLORA LA RUTA DEL CAFÉ</p>
+            <p className={styles.subtitle}>DESLIZA HACIA ABAJO PARA</p>
+            <p className={styles.subtitle}>EXPLORAR LA RUTA DEL CAFÉ</p>
           </div>
         </div>
 

@@ -5,6 +5,8 @@
     position: relative;
     height: calc(100vh * 2);
     overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Mejor scroll en iOS */
 }
 
 /* 2) Contenedor fijo */
@@ -22,6 +24,8 @@
     backface-visibility: hidden;
     transform: translateZ(0);
     transition: background-image 0.4s ease;
+    touch-action: none;
+    /* Importante para control táctil */
 }
 
 /* 3) VIDEO */
@@ -37,6 +41,8 @@
     z-index: 12;
     will-change: opacity, transform;
     backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    /* Mejor rendimiento en iOS */
 }
 
 .showVideo {
@@ -64,11 +70,12 @@
     transition: opacity 0.4s ease;
     max-width: 90%;
     will-change: opacity;
+    pointer-events: none;
+    /* Permitir eventos táctiles en el contenedor */
 }
 
 .hidden {
     opacity: 0;
-    pointer-events: none;
 }
 
 .visible {
@@ -139,7 +146,7 @@
     transition: all 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* 11) Responsive */
+/* 11) Responsive para móviles */
 @media (max-width: 768px) {
     .initialText .mainTitle {
         font-size: 2.5rem;
@@ -153,6 +160,11 @@
     .stageText .stageTitle {
         font-size: 2rem;
     }
+
+    /* Texto más claro para móviles */
+    .frameText {
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+    }
 }
 
 @media (max-width: 480px) {
@@ -161,15 +173,32 @@
     }
 
     .initialText .subtitle {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
     .stageText .stageTitle {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
 
     .stageText .stageDesc {
+        font-size: 1rem;
+        padding: 0 1.5rem;
+    }
+
+    /* Mejorar legibilidad en móviles pequeños */
+    .stageText .stageDesc {
         font-size: 0.9rem;
-        padding: 0 1rem;
+        line-height: 1.6;
+    }
+}
+
+/* 12) Soporte para iOS */
+@supports (-webkit-touch-callout: none) {
+    .heroContainer {
+        height: -webkit-fill-available;
+    }
+
+    .video {
+        height: -webkit-fill-available;
     }
 }
