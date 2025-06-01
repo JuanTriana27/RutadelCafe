@@ -41,8 +41,6 @@
     z-index: 12;
     will-change: opacity, transform;
     backface-visibility: hidden;
-    -webkit-transform: translateZ(0);
-    /* Mejor rendimiento en iOS */
 }
 
 .showVideo {
