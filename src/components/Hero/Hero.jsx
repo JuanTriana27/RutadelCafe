@@ -75,6 +75,13 @@ const HeroSection = () => {
       video: "/videos/preparacion.mp4",
       textStart: 2.2,
       textEnd: 5.2
+    },
+    {
+      title: "Consumo",
+      description: "El proceso de preparar el café a partir de los granos molidos.",
+      video: "/videos/final.mp4",
+      textStart: 2.2,
+      textEnd: 5.2
     }
   ], []);
 
