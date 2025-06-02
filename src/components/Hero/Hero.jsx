@@ -1,4 +1,3 @@
-// src/components/HeroSection.jsx
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import styles from './HeroSection.module.css';
 
@@ -16,7 +15,8 @@ const HeroSection = () => {
   const hasMoved = useRef(false);
   const stageTextRef = useRef(null);
   const [videosLoaded, setVideosLoaded] = useState(false);
-  const previousStageRef = useRef(null);
+  // Refiérase a la "última etapa" antes de hacer un retroceso:
+  const lastStageRef = useRef(null);
 
   // Definición de etapas memoizada
   const stages = useMemo(() => [
@@ -78,7 +78,7 @@ const HeroSection = () => {
     },
     {
       title: "Consumo",
-      description: "El proceso de preparar el café a partir de los granos molidos.",
+      description: "El momento de disfrutar del café preparado, ya sea en una taza o en una bebida especial.",
       video: "/videos/final.mp4",
       textStart: 2.2,
       textEnd: 5.2
@@ -100,7 +100,7 @@ const HeroSection = () => {
     Promise.all(videoPromises).then(() => {
       setVideosLoaded(true);
     });
-  }, [stages]); // Añadido stages como dependencia
+  }, [stages]);
 
   // Umbrales y factores
   const SCROLL_THRESHOLD = 3;
@@ -122,23 +122,30 @@ const HeroSection = () => {
       heroContainerRef.current.style.backgroundPosition = "center";
     }
 
-    // 2) Manejar metadatos del video
+    // 2) Manejar metadatos del video y posicion inicial según si venimos de un retroceso
     const videoEl = videoRef.current;
     const handleLoadedData = () => {
       setMetadataLoaded(true);
       if (videoEl) {
-        videoEl.currentTime = 0;
+        // Si lastStageRef > currentStage, significa que venimos de retroceder: arrancar al final
+        if (lastStageRef.current !== null && lastStageRef.current > currentStage) {
+          // Posicionar casi al final (evitamos edge cases en video.duration)
+          videoEl.currentTime = videoEl.duration - 0.05;
+        } else {
+          // Inicio normal
+          videoEl.currentTime = 0;
+        }
         videoEl.pause();
+        // Limpiamos el ref para próximas cargas
+        lastStageRef.current = null;
       }
     };
 
     const handleVideoChange = () => {
       if (videoEl) {
-        // Si ya está cargado, manejamos inmediatamente
         if (videoEl.readyState >= 1) {
           handleLoadedData();
         } else {
-          // Agregar listener para cuando cargue
           videoEl.addEventListener('loadeddata', handleLoadedData);
         }
       }
@@ -146,7 +153,6 @@ const HeroSection = () => {
 
     // Si hay un video activo y los videos están cargados, configurarlo
     if (currentStage !== null && videosLoaded) {
-      previousStageRef.current = currentStage;
       videoEl.src = stages[currentStage].video;
       handleVideoChange();
     }
@@ -157,7 +163,6 @@ const HeroSection = () => {
       if (Math.abs(deltaY) < SCROLL_THRESHOLD) return;
 
       const now = Date.now();
-
       lastScrollTime.current = now;
 
       if (scrollTimeout.current) {
@@ -172,12 +177,9 @@ const HeroSection = () => {
       const video = videoRef.current;
       if (!video) return;
 
-      // Velocidad relativa
       const speedFactor = 1;
       const deltaTime = deltaY * SCROLL_FACTOR * speedFactor;
-
       let newTime = video.currentTime + deltaTime;
-
       if (newTime < 0) newTime = 0;
       if (newTime > video.duration) newTime = video.duration;
       video.currentTime = newTime;
@@ -208,14 +210,17 @@ const HeroSection = () => {
         stageTextRef.current.style.opacity = opacity;
       }
 
-      // Detectar retroceso al inicio
+      // --- Detectar retroceso al inicio del video ---
       if (newTime <= 0 && deltaY < 0) {
         isTransitioning.current = true;
         video.currentTime = 0;
         video.classList.remove(styles.showVideo);
 
+        // Guardamos la etapa antes de retroceder
+        lastStageRef.current = currentStage;
+
         setTimeout(() => {
-          // Si es la primera etapa, volver a inicio
+          // Si es la primera etapa, volvemos a la imagen inicial
           if (currentStage === 0) {
             setCurrentStage(null);
             document.querySelector('header')?.classList.remove(styles.hideHeader);
@@ -224,13 +229,14 @@ const HeroSection = () => {
             // Retroceder a la etapa anterior
             setCurrentStage(currentStage - 1);
           }
-
           video.pause();
           isTransitioning.current = false;
         }, 400);
+
+        return; // <--- Importante: salimos para que no vuelva a evaluar más condiciones hoy
       }
 
-      // Avanzar a la siguiente etapa al final del video
+      // --- Avanzar a la siguiente etapa al final del video ---
       if (newTime >= video.duration - 0.1 && currentStage < stages.length - 1) {
         setCurrentStage(currentStage + 1);
       }
@@ -272,6 +278,7 @@ const HeroSection = () => {
       window.addEventListener('wheel', onWheel, { passive: false });
       window.addEventListener('touchstart', onTouchStart, { passive: false });
       window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('touchend', onTouchEnd);
     }
 
     return () => {
@@ -284,7 +291,7 @@ const HeroSection = () => {
       }
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
-  }, [currentStage, metadataLoaded, videosLoaded, stages]); // Añadido stages como dependencia
+  }, [currentStage, metadataLoaded, videosLoaded, stages]);
 
   // Iniciar etapa al hacer scroll hacia abajo en la pantalla inicial
   useEffect(() => {
