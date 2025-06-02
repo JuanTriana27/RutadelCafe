@@ -3,6 +3,7 @@
     background-color: #edb600;
     position: fixed;
     width: 100%;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     z-index: 1000;
 }
 
